@@ -2,6 +2,8 @@ pandas
 numpy
 matplotlib
 seaborn
-nltk
 TextBlob
 scikit-learn
+nltk
+spacy
+swifter
