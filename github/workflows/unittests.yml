@@ -30,7 +30,7 @@ jobs:
         pip install -r requirements.txt
  
     # # This step runs the tests for the Python application
-    # - name: Run tests
-    #   run: |
-    #     python -m unittest discover -s tests
+    - name: Run tests
+      run: |
+        python -m unittest discover -s tests
  
