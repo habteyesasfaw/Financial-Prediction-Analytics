@@ -28,9 +28,21 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    
+
+     
+        
  
-    # # This step runs the tests for the Python application
+## Install NLTK and Download Resources
+        - name: Install NLTK and Download Resources
+  run: |
+    pip install nltk
+    python -m nltk.downloader vader_lexicon
+
+  
+  # # This step runs the tests for the Python application
     - name: Run tests
       run: |
         python -m unittest discover -s tests
+
  
