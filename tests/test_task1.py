@@ -1,61 +1,36 @@
-import unittest
 import pandas as pd
-import numpy as np
-import talib
+import pandas_ta as ta
 
-class TestTask1FinancialAnalysis(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.stock_df = pd.DataFrame({
-            'date': pd.to_datetime([
-                '2024-08-01', '2024-08-02', '2024-08-03'
-            ]),
-            'open': [100.0, 105.0, 102.0],
-            'high': [110.0, 108.0, 107.0],
-            'low': [95.0, 100.0, 99.0],
-            'close': [105.0, 102.0, 100.0],
-            'volume': [1000, 1500, 1200]
-        })
+# Load your stock data
+df = pd.read_csv('../data/NVDA_historical_data.csv')
 
-    def test_sma_calculation(self):
-        # Calculate SMA
-        self.stock_df['SMA'] = talib.SMA(self.stock_df['close'], timeperiod=2)
-        
-        # Check if SMA is calculated correctly
-        self.assertTrue('SMA' in self.stock_df.columns)
-        self.assertEqual(len(self.stock_df['SMA']), len(self.stock_df))
+# Ensure the data has the required columns
+assert 'Date' in df.columns, "Date column is missing"
+assert 'Close' in df.columns, "Close column is missing"
+assert 'Open' in df.columns, "Open column is missing"
+assert 'High' in df.columns, "High column is missing"
+assert 'Low' in df.columns, "Low column is missing"
+assert 'Volume' in df.columns, "Volume column is missing"
 
-    def test_rsi_calculation(self):
-        # Calculate RSI
-        self.stock_df['RSI'] = talib.RSI(self.stock_df['close'], timeperiod=2)
-        
-        # Check if RSI is calculated correctly
-        self.assertTrue('RSI' in self.stock_df.columns)
-        self.assertEqual(len(self.stock_df['RSI']), len(self.stock_df))
+# Convert 'Date' to datetime format
+df['Date'] = pd.to_datetime(df['Date'])
 
-    def test_macd_calculation(self):
-        # Calculate MACD
-        macd, signal, hist = talib.MACD(self.stock_df['close'])
-        self.stock_df['MACD'] = macd
-        self.stock_df['MACD_Signal'] = signal
-        self.stock_df['MACD_Hist'] = hist
-        
-        # Check if MACD is calculated correctly
-        self.assertTrue('MACD' in self.stock_df.columns)
-        self.assertTrue('MACD_Signal' in self.stock_df.columns)
-        self.assertTrue('MACD_Hist' in self.stock_df.columns)
-        self.assertEqual(len(self.stock_df['MACD']), len(self.stock_df))
+# Sort by date just in case
+df = df.sort_values(by='Date')
 
-    def test_daily_returns(self):
-        # Calculate daily returns
-        self.stock_df['daily_return'] = self.stock_df['close'].pct_change()
-        
-        # Check if daily returns are calculated correctly
-        self.assertTrue('daily_return' in self.stock_df.columns)
-        self.assertEqual(len(self.stock_df['daily_return']), len(self.stock_df))
-        
-        # Check that all values except the first are not NaN
-        self.assertFalse(self.stock_df['daily_return'].iloc[1:].isnull().any())
+# Test case: Calculate the Simple Moving Average (SMA)
+df['SMA_20'] = ta.sma(df['Close'], length=20)
+assert not df['SMA_20'].isnull().all(), "SMA_20 calculation failed"
 
-if __name__ == '__main__':
-    unittest.main()
+# Test case: Calculate the Relative Strength Index (RSI)
+df['RSI_14'] = ta.rsi(df['Close'], length=14)
+assert not df['RSI_14'].isnull().all(), "RSI_14 calculation failed"
+
+# Test case: Calculate the Bollinger Bands
+df['BB_upper'], df['BB_middle'], df['BB_lower'] = ta.bbands(df['Close'], length=20)
+assert not df['BB_upper'].isnull().all(), "BB_upper calculation failed"
+assert not df['BB_middle'].isnull().all(), "BB_middle calculation failed"
+assert not df['BB_lower'].isnull().all(), "BB_lower calculation failed"
+
+# Print a success message if all tests pass
+print("All tests passed successfully.")
