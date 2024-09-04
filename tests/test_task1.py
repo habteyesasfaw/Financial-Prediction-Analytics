@@ -1,11 +1,13 @@
 import unittest
 import pandas as pd
+import os
 
 class TestEDA(unittest.TestCase):
 
     def setUp(self):
-        # Load a sample dataset for testing
-        self.df = pd.read_csv('../data/raw_analyst_ratings.csv')
+        # Update the file path as needed
+        file_path = os.path.join(os.path.dirname(__file__), '../data/raw_analyst_ratings.csv')
+        self.df = pd.read_csv(file_path)
 
     def test_headline_length_statistics(self):
         # Calculate the length of each headline
