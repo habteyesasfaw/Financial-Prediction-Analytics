@@ -4,11 +4,23 @@ import unittest
 
 class TestEDA(unittest.TestCase):
     def setUp(self):
+        # Correct file path
         file_path = '../data/raw_analyst_ratings.csv'
-        try:
-            self.df = pd.read_csv(file_path)
-        except FileNotFoundError:
+        # Verify the file exists before attempting to read
+        if not os.path.isfile(file_path):
             raise Exception(f"File not found: {file_path}")
+        self.df = pd.read_csv(file_path)
+
+    def test_dataframe_loaded(self):
+        # Check if the DataFrame is loaded
+        self.assertIsNotNone(self.df)
+        self.assertGreater(len(self.df), 0)
+
+    def test_column_existence(self):
+        # Check if specific columns exist
+        required_columns = ['headline', 'publisher', 'publication_date']
+        for column in required_columns:
+            self.assertIn(column, self.df.columns)
 
     def test_headline_length_statistics(self):
         # Calculate the length of each headline
