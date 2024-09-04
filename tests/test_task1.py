@@ -1,54 +1,53 @@
-import os
-import pandas as pd
 import unittest
+import pandas as pd
+from textblob import TextBlob
 
-class TestEDA(unittest.TestCase):
-    def setUp(self):
-        # Correct file path
-        file_path = '../data/raw_analyst_ratings.csv'
-        # Verify the file exists before attempting to read
-        if not os.path.isfile(file_path):
-            raise Exception(f"File not found: {file_path}")
-        self.df = pd.read_csv(file_path)
+# Sample data for testing
+test_news_data = {
+    'headline': [
+        'Apple reaches all-time high in stock price',
+        'Amazon announces major expansion plans',
+        'Tesla faces regulatory scrutiny over safety concerns'
+    ],
+    'url': [
+        'http://example.com/apple',
+        'http://example.com/amazon',
+        'http://example.com/tesla'
+    ],
+    'publisher': ['Reuters', 'Bloomberg', 'Reuters'],
+    'date': ['2023-08-01', '2023-08-02', '2023-08-03'],
+    'stock': ['AAPL', 'AMZN', 'TSLA']
+}
 
-    def test_dataframe_loaded(self):
-        # Check if the DataFrame is loaded
-        self.assertIsNotNone(self.df)
-        self.assertGreater(len(self.df), 0)
+class TestTask1EDA(unittest.TestCase):
 
-    def test_column_existence(self):
-        # Check if specific columns exist
-        required_columns = ['headline', 'publisher', 'publication_date']
-        for column in required_columns:
-            self.assertIn(column, self.df.columns)
+    @classmethod
+    def setUpClass(cls):
+        # Convert the test data into a DataFrame
+        cls.news_df = pd.DataFrame(test_news_data)
+        cls.news_df['date'] = pd.to_datetime(cls.news_df['date'])
 
     def test_headline_length_statistics(self):
-        # Calculate the length of each headline
-        self.df['headline_length'] = self.df['headline'].apply(len)
-        
-        # Test that headline length statistics are calculated correctly
-        self.assertTrue('headline_length' in self.df.columns)
-        self.assertGreater(self.df['headline_length'].mean(), 0)
+        """Test the calculation of headline length statistics."""
+        self.news_df['headline_length'] = self.news_df['headline'].apply(len)
+        mean_length = self.news_df['headline_length'].mean()
+        self.assertEqual(mean_length, 44.0, "Mean headline length should be 44.0")
 
-    def test_publisher_counts(self):
-        # Count the number of articles per publisher
-        publisher_counts = self.df['publisher'].value_counts()
-        
-        # Test that publisher counts are calculated correctly
-        self.assertGreater(len(publisher_counts), 0)
-        self.assertGreater(publisher_counts.max(), 0)
+    def test_article_count_per_publisher(self):
+        """Test the count of articles per publisher."""
+        publisher_counts = self.news_df['publisher'].value_counts()
+        self.assertEqual(publisher_counts['Reuters'], 2, "Reuters should have 2 articles")
+        self.assertEqual(publisher_counts['Bloomberg'], 1, "Bloomberg should have 1 article")
 
-    def test_publication_date_analysis(self):
-        # Convert publication date to datetime
-        self.df['publication_date'] = pd.to_datetime(self.df['publication_date'])
+    def test_sentiment_analysis(self):
+        """Test sentiment analysis on headlines."""
+        def get_sentiment(text):
+            return TextBlob(text).sentiment.polarity
         
-        # Test that publication dates are converted correctly
-        self.assertTrue(pd.api.types.is_datetime64_any_dtype(self.df['publication_date']))
-        
-        # Check if publication trends can be analyzed
-        publication_trends = self.df.groupby(self.df['publication_date'].dt.to_period('M')).size()
-        self.assertGreater(len(publication_trends), 0)
-        self.assertGreater(publication_trends.max(), 0)
+        self.news_df['sentiment'] = self.news_df['headline'].apply(get_sentiment)
+        sentiments = self.news_df['sentiment'].tolist()
+        expected_sentiments = [0.16, 0.0625, 0.0]
+        self.assertEqual(sentiments, expected_sentiments, "Sentiments should match expected values")
 
 if __name__ == '__main__':
     unittest.main()
