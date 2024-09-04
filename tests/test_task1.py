@@ -1,13 +1,14 @@
-import unittest
-import pandas as pd
 import os
+import pandas as pd
+import unittest
 
 class TestEDA(unittest.TestCase):
-
     def setUp(self):
-        # Update the file path as needed
-        file_path = os.path.join(os.path.dirname(__file__), '../data/raw_analyst_ratings.csv')
-        self.df = pd.read_csv(file_path)
+        file_path = '../data/raw_analyst_ratings.csv'
+        try:
+            self.df = pd.read_csv(file_path)
+        except FileNotFoundError:
+            raise Exception(f"File not found: {file_path}")
 
     def test_headline_length_statistics(self):
         # Calculate the length of each headline
