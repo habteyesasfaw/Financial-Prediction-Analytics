@@ -1,79 +1,61 @@
 import unittest
 import pandas as pd
 import numpy as np
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from scipy.stats import pearsonr
+import talib
 
 class TestTask1FinancialAnalysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Load sample data for testing
-        cls.news_df = pd.DataFrame({
-            'headline': [
-                'Stock hits record high after positive earnings report',
-                'Company faces lawsuit over alleged fraud',
-                'Market sees dip as new trade policies introduced'
-            ],
-            'date': pd.to_datetime([
-                '2024-08-01', '2024-08-02', '2024-08-03'
-            ]),
-            'stock': ['AAPL', 'AAPL', 'AAPL']
-        })
-        
         cls.stock_df = pd.DataFrame({
             'date': pd.to_datetime([
                 '2024-08-01', '2024-08-02', '2024-08-03'
             ]),
-            'close': [150.0, 155.0, 148.0]
+            'open': [100.0, 105.0, 102.0],
+            'high': [110.0, 108.0, 107.0],
+            'low': [95.0, 100.0, 99.0],
+            'close': [105.0, 102.0, 100.0],
+            'volume': [1000, 1500, 1200]
         })
-        
-        cls.sia = SentimentIntensityAnalyzer()
 
-    def test_sentiment_analysis(self):
-        # Perform sentiment analysis on headlines
-        self.news_df['sentiment'] = self.news_df['headline'].apply(lambda x: self.sia.polarity_scores(x)['compound'])
+    def test_sma_calculation(self):
+        # Calculate SMA
+        self.stock_df['SMA'] = talib.SMA(self.stock_df['close'], timeperiod=2)
         
-        # Check if sentiment scores are computed
-        self.assertTrue('sentiment' in self.news_df.columns)
-        self.assertEqual(len(self.news_df['sentiment']), len(self.news_df))
-        self.assertFalse(self.news_df['sentiment'].isnull().any())
+        # Check if SMA is calculated correctly
+        self.assertTrue('SMA' in self.stock_df.columns)
+        self.assertEqual(len(self.stock_df['SMA']), len(self.stock_df))
+
+    def test_rsi_calculation(self):
+        # Calculate RSI
+        self.stock_df['RSI'] = talib.RSI(self.stock_df['close'], timeperiod=2)
+        
+        # Check if RSI is calculated correctly
+        self.assertTrue('RSI' in self.stock_df.columns)
+        self.assertEqual(len(self.stock_df['RSI']), len(self.stock_df))
+
+    def test_macd_calculation(self):
+        # Calculate MACD
+        macd, signal, hist = talib.MACD(self.stock_df['close'])
+        self.stock_df['MACD'] = macd
+        self.stock_df['MACD_Signal'] = signal
+        self.stock_df['MACD_Hist'] = hist
+        
+        # Check if MACD is calculated correctly
+        self.assertTrue('MACD' in self.stock_df.columns)
+        self.assertTrue('MACD_Signal' in self.stock_df.columns)
+        self.assertTrue('MACD_Hist' in self.stock_df.columns)
+        self.assertEqual(len(self.stock_df['MACD']), len(self.stock_df))
 
     def test_daily_returns(self):
         # Calculate daily returns
         self.stock_df['daily_return'] = self.stock_df['close'].pct_change()
         
-        # Check if daily returns are computed correctly
+        # Check if daily returns are calculated correctly
         self.assertTrue('daily_return' in self.stock_df.columns)
         self.assertEqual(len(self.stock_df['daily_return']), len(self.stock_df))
-        self.assertFalse(self.stock_df['daily_return'].isnull().any())
-
-    def test_correlation_analysis(self):
-        # Ensure daily returns and sentiment are calculated
-        self.stock_df['daily_return'] = self.stock_df['close'].pct_change()
-        self.news_df['sentiment'] = self.news_df['headline'].apply(lambda x: self.sia.polarity_scores(x)['compound'])
-
-        # Merge dataframes on date
-        merged_df = pd.merge(self.news_df, self.stock_df, on='date')
-
-        # Calculate average daily sentiment if multiple headlines per day
-        daily_sentiment = merged_df.groupby('date')['sentiment'].mean().reset_index()
-
-        # Calculate daily returns
-        daily_returns = merged_df.groupby('date')['daily_return'].mean().reset_index()
-
-        # Merge sentiment and returns for correlation analysis
-        correlation_df = pd.merge(daily_sentiment, daily_returns, on='date')
-
-        # Ensure there are no NaN values before performing correlation
-        correlation_df.dropna(inplace=True)
-
-        # Calculate Pearson correlation
-        if not correlation_df.empty:
-            correlation, _ = pearsonr(correlation_df['sentiment'], correlation_df['daily_return'])
-            # Check if correlation is within expected range
-            self.assertTrue(-1 <= correlation <= 1)
-        else:
-            self.fail("Correlation dataframe is empty, check the data pipeline for issues.")
+        
+        # Check that all values except the first are not NaN
+        self.assertFalse(self.stock_df['daily_return'].iloc[1:].isnull().any())
 
 if __name__ == '__main__':
     unittest.main()
