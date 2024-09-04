@@ -3,10 +3,14 @@ name: Python unit tests
 on:
   push:
     branches:
+
       - task-2 # Triggers on push to any branch
+      - task-1 # Triggers on push to any branch
+
   pull_request:
     branches:
       - main # Triggers on pull requests to any branch
+
 
 jobs:
   build:
@@ -31,4 +35,6 @@ jobs:
 
     - name: Run tests
       run: |
+
         python -m unittest discover -s tests
+
